@@ -39,6 +39,17 @@ class Patient(BaseModel):
 def read_root():
     return {"message":"Test api for patient"}
 
+
+@app.get("/test/{p_id}")
+def read_route(p_id: int):
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    row = cursor.execute("SELECT * FROM patients WHERE id=?", (p_id,)).fetchone()
+    conn.close()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    return dict(row)
+
 @app.get("/patients")
 def get_patient():
     conn = get_db_conn()
@@ -66,9 +77,10 @@ def add_patient(patient:Patient):
 def update_patient(p_id:int, patient: Patient):
     conn = get_db_conn()
     cursor = conn.cursor()
-    existing = cursor.execute("SELECT * FROM patients where id=?",(p_id,))
+    existing = cursor.execute("SELECT * FROM patients WHERE id=?", (p_id,)).fetchone()
     if existing is None:
-        raise HTTPException(status_code=409, detail="Patient not found")
+        conn.close()
+        raise HTTPException(status_code=404, detail="Patient not found")
     cursor.execute("UPDATE patients SET name=?, age=?, disease=? WHERE id=?",(patient.name, patient.age, patient.disease, p_id))
     conn.commit()
     conn.close()
@@ -79,11 +91,11 @@ def update_patient(p_id:int, patient: Patient):
 def delete_patient(p_id:int, patient: Patient):
     conn = get_db_conn()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM patients WHERE id=?",(p_id,))
-    cursor.fetchone()
-    if cursor is None:
+    existing = cursor.execute("SELECT * FROM patients WHERE id=?", (p_id,)).fetchone()
+    if existing is None:
+        conn.close()
         raise HTTPException(status_code=404, detail="Patient not found")
-    cursor.execute("DELETE FROM patients WHERE p_id=?", (p_id,))
+    cursor.execute("DELETE FROM patients WHERE id=?", (p_id,))
     conn.commit()
+    conn.close()
     return {"message" : "Patient deleted successfully"}
-
