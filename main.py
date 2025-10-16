@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,Path
 import sqlite3
 from pydantic import BaseModel
 
@@ -41,7 +41,7 @@ def read_root():
 
 
 @app.get("/test/{p_id}")
-def read_route(p_id: int):
+def read_route(p_id: int = Path(...,description="Enter the id of the patient", example='1')):
     conn = get_db_conn()
     cursor = conn.cursor()
     row = cursor.execute("SELECT * FROM patients WHERE id=?", (p_id,)).fetchone()
