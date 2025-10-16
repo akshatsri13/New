@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException,Path
 import sqlite3
 from pydantic import BaseModel
+import os
 
 
 app = FastAPI()
@@ -33,6 +34,19 @@ class Patient(BaseModel):
     name: str
     age: int
     disease: str
+
+
+import os
+
+@app.get("/debug/db-exists")
+def debug_db():
+    path = "patients.db"
+    return {
+        "exists": os.path.exists(path),
+        "abs_path": os.path.abspath(path),
+        "cwd": os.getcwd(),
+    }
+
 
 # making end points
 @app.get("/")
